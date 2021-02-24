@@ -119,3 +119,20 @@ if (is_chrome_branded) {
   url_unsecure_scheme = "chromium"
   url_x_callback_scheme = "chromium-x-callback"
 }
+
+
+if (is_chrome_branded) {
+  chromium_short_name = "BrowserX"
+  url_channel_scheme = "googlechrome-dev"
+  url_secure_scheme = "googlechromes"
+  url_ssoauth_scheme = "$ios_app_bundle_id_prefix.sso.chrome.stable"
+  url_unsecure_scheme = "googlechrome"
+  url_x_callback_scheme = "googlechrome-x-callback"
+} else {
+  chromium_short_name = "BrowserX"
+  url_channel_scheme = "chromium-dev"
+  url_secure_scheme = "chromiums"
+  url_ssoauth_scheme = "$ios_app_bundle_id_prefix.sso.chromium"
+  url_unsecure_scheme = "chromium"
+  url_x_callback_scheme = "chromium-x-callback"
+}
