@@ -136,3 +136,4 @@ if (is_chrome_branded) {
   url_unsecure_scheme = "chromium"
   url_x_callback_scheme = "chromium-x-callback"
 }
+
