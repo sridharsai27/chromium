@@ -197,6 +197,9 @@
 #import "ios/web/public/web_state_observer_bridge.h"
 #include "ui/base/device_form_factor.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "components/search_engines/template_url_service_observer.h"
+#import "ios/chrome/browser/search_engines/search_engine_observer_bridge.h"
+
 
 #if !defined(__has_feature) || !__has_feature(objc_arc)
 #error "This file requires ARC support."
@@ -356,7 +359,8 @@ NSString* const kBrowserViewControllerSnackbarCategory =
                                      UIGestureRecognizerDelegate,
                                      URLLoadingObserver,
                                      ViewRevealingAnimatee,
-                                     WebStateListObserving> {
+                                     WebStateListObserving,
+SearchEngineObserving> {
   // The dependency factory passed on initialization.  Used to vend objects used
   // by the BVC.
   BrowserViewControllerDependencyFactory* _dependencyFactory;
@@ -464,6 +468,15 @@ NSString* const kBrowserViewControllerSnackbarCategory =
   // The disabler that prevents the toolbar from being scrolled offscreen when
   // the thumb strip is visible.
   std::unique_ptr<ScopedFullscreenDisabler> _fullscreenDisabler;
+                                         
+  ChromeBrowserState* _browserState;  // weak
+                                         
+  Browser* _browser; //weak
+  TemplateURLService* _templateURLService;  // weak
+                                         
+  std::vector<TemplateURL*> urls;
+  
+std::unique_ptr<SearchEngineObserverBridge> _searchEngineObserverBridge;
 }
 
 // Activates/deactivates the object. This will enable/disable the ability for
@@ -754,11 +767,21 @@ NSString* const kBrowserViewControllerSnackbarCategory =
 
       _fullscreenController = FullscreenController::FromBrowser(browser);
 
-    _footerFullscreenProgress = 1.0;
-
-    _observer = [[KeyboardObserverHelper alloc] init];
-    if (browser)
-      [self updateWithBrowser:browser];
+      _footerFullscreenProgress = 1.0;
+      
+      _observer = [[KeyboardObserverHelper alloc] init];
+      if (browser) {
+          [self updateWithBrowser:browser];
+          
+          
+          _browser = self.browser;
+          _browserState = self.browser->GetBrowserState();
+          
+          _templateURLService = ios::TemplateURLServiceFactory::GetForBrowserState(_browserState);
+          _searchEngineObserverBridge = std::make_unique<SearchEngineObserverBridge>(self, _templateURLService);
+          _templateURLService->Load();
+      }
+          
   }
   return self;
 }
@@ -888,6 +911,10 @@ NSString* const kBrowserViewControllerSnackbarCategory =
     return;
 
   _visible = visible;
+}
+
+- (void)searchEngineChanged {
+    [self setDefaultBrowserToDuck];
 }
 
 - (void)setViewVisible:(BOOL)viewVisible {
@@ -1461,7 +1488,26 @@ NSString* const kBrowserViewControllerSnackbarCategory =
   [tapRecognizer setDelegate:self];
   [tapRecognizer setCancelsTouchesInView:NO];
   [self.contentArea addGestureRecognizer:tapRecognizer];
+    
+    [self setDefaultBrowserToDuck];
 }
+
+// Set default browser engine to DuckDuckGo engine
+- (void)setDefaultBrowserToDuck {
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    NSString* const isSetDefaultBrowser = @"isSetDefaultBrowserKey";
+    if(![[NSUserDefaults standardUserDefaults] boolForKey:isSetDefaultBrowser]) {
+        urls = _templateURLService->GetTemplateURLs();
+        for (TemplateURL* url : urls) {
+            NSString *urlKeyword = base::SysUTF16ToNSString(url->short_name());
+            if ([urlKeyword isEqualToString:@"DuckDuckGo"]) {
+                _templateURLService->SetUserSelectedDefaultSearchProvider(url);
+                [defaults setBool:YES forKey:isSetDefaultBrowser];
+            }
+        }
+    }
+}
+
 
 - (void)viewSafeAreaInsetsDidChange {
   [super viewSafeAreaInsetsDidChange];
@@ -1928,7 +1974,7 @@ NSString* const kBrowserViewControllerSnackbarCategory =
   CGRect statusBarFrame = CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), 0);
   _fakeStatusBarView = [[UIView alloc] initWithFrame:statusBarFrame];
   [_fakeStatusBarView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-  if (IsIPadIdiom()) {
+  if ([self canShowTabStrip]) {
     _fakeStatusBarView.backgroundColor = UIColor.blackColor;
     _fakeStatusBarView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     DCHECK(self.contentArea);
