@@ -17,7 +17,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="launchscreen_app_logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="K7H-Iv-QNk">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="launchscreen_app_logo" translatesAutoresizingMaskIntoConstraints="NO" id="K7H-Iv-QNk">
                         <rect key="frame" x="128" y="369" width="158" height="158"/>
                         <constraints>
                             <constraint firstAttribute="width" relation="lessThanOrEqual" constant="192" id="Ybu-iB-Ad4"/>
@@ -65,7 +65,7 @@
         </viewController>
     </objects>
     <resources>
-        <image name="launchscreen_app_logo.png" width="57" height="57"/>
+        <image name="launchscreen_app_logo" width="128" height="128"/>
         <image name="launchscreen_brand_name" width="107" height="35"/>
         <namedColor name="background_color">
             <color red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
